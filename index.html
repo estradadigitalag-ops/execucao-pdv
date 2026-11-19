@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Execução PDV</title>
+<meta name="theme-color" content="#0f5c4d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Execução PDV">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#f4f6f5; --card:#ffffff; --ink:#17201d; --muted:#5f6b67; --line:#dfe5e2;
+  --brand:#0f5c4d; --brand-ink:#ffffff; --brand-soft:#e3f0ec;
+  --ok:#1f7a3f; --ok-soft:#e2f3e7; --bad:#b3261e; --bad-soft:#fbe5e3; --warn:#8a5a00; --warn-soft:#fdf0d5;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1311; --card:#171e1b; --ink:#e7ecea; --muted:#9aa7a2; --line:#2a3430;
+    --brand:#3fae94; --brand-ink:#06201a; --brand-soft:#1b2d28;
+    --ok:#5cc884; --ok-soft:#163222; --bad:#ff8a80; --bad-soft:#3a1a18; --warn:#f2c066; --warn-soft:#3a2c10;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header.top{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--brand-ink);padding:calc(10px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;gap:10px}
+header.top h1{font-size:18px;margin:0;flex:1;font-weight:650}
+header.top .sub{font-size:12px;opacity:.85}
+main{max-width:760px;margin:0 auto;padding:14px 16px}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;border:0;background:none;color:var(--muted);padding:9px 2px 8px;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs button svg{width:23px;height:23px}
+nav.tabs button.on{color:var(--brand);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 10px}
+.card h3{font-size:14px;margin:14px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+textarea{min-height:70px;resize:vertical}
+input[type=file]{padding:8px;background:transparent}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:11px;padding:11px 14px;font:inherit;font-weight:600;background:var(--brand);color:var(--brand-ink);cursor:pointer;text-decoration:none}
+.btn.sec{background:var(--brand-soft);color:var(--brand)}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn.block{width:100%;margin-top:10px}
+.btn.sm{padding:7px 10px;font-size:14px}
+.btn:disabled{opacity:.5}
+.muted{color:var(--muted);font-size:13px}
+.list .item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.list .item:last-child{border-bottom:0}
+.list .item .grow{flex:1;min-width:0}
+.list .item .t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--brand-soft);color:var(--brand);font-weight:600}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-shrink:0}
+.seg button{border:0;background:var(--card);color:var(--muted);padding:8px 10px;font:inherit;font-size:13px;font-weight:600}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on.exec{background:var(--ok);color:#fff}.seg button.on.nao{background:var(--bad);color:#fff}.seg button.on.na{background:var(--muted);color:#fff}
+.oprow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.oprow:last-child{border-bottom:0}.oprow .grow{flex:1;font-size:15px}
+.num{width:84px;text-align:right}
+.prow{display:grid;grid-template-columns:1fr 92px 70px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.prow:last-child{border-bottom:0}.prow .ref{font-size:12px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+.kpi .v{font-size:22px;font-weight:700}.kpi .l{font-size:12px;color:var(--muted)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:8px}
+.photos figure{margin:0;position:relative}
+.photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.photos figcaption{font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photos .x{position:absolute;top:4px;right:4px;border:0;border-radius:99px;width:26px;height:26px;background:rgba(0,0,0,.6);color:#fff;font-size:15px;line-height:26px;padding:0}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:4px}.bar>i{display:block;height:100%;background:var(--brand)}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:20;background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:14px;text-align:center;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;max-width:560px;margin:0 auto}
+.toast.show{opacity:1;transform:none}
+.lock{position:fixed;inset:0;z-index:50;background:var(--brand);color:var(--brand-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px}
+.lock input{max-width:220px;text-align:center;font-size:26px;letter-spacing:.3em;background:rgba(255,255,255,.15);color:var(--brand-ink);border-color:rgba(255,255,255,.35)}
+.lock .err{min-height:20px;font-size:14px}
+.modal{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.modal .sheet{background:var(--bg);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+.modal .sheet .hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}.modal .sheet .hd h2{flex:1;margin:0;font-size:18px}
+.lightbox{position:fixed;inset:0;z-index:40;background:#000;display:flex;align-items:center;justify-content:center}
+.lightbox img{max-width:100%;max-height:100%}
+.empty{text-align:center;color:var(--muted);padding:26px 10px}
+.hidden{display:none!important}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+table.mini{width:100%;border-collapse:collapse;font-size:14px}
+table.mini td,table.mini th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+table.mini th{color:var(--muted);font-weight:600;font-size:12px}
+</style>
+</head>
+<body>
+
+<div id="lock" class="lock hidden">
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+  <div style="font-size:20px;font-weight:650">Execução PDV</div>
+  <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="PIN">
+  <button class="btn" style="background:#fff;color:#0f5c4d" id="pinBtn">Desbloquear</button>
+  <div class="err" id="pinErr"></div>
+</div>
+
+<header class="top">
+  <div style="flex:1">
+    <h1 id="title">Execução PDV</h1>
+    <div class="sub" id="subtitle"></div>
+  </div>
+  <span id="netBadge" class="pill hidden" style="background:rgba(255,255,255,.2);color:#fff">Offline</span>
+</header>
+
+<main id="view"></main>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="visita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Visita</button>
+  <button data-tab="pdvs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9h18"/><path d="M9 20v-6h6v6"/></svg>PDVs</button>
+  <button data-tab="historico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+  <button data-tab="relatorios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Relatórios</button>
+  <button data-tab="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Execução PDV — PWA offline para auditoria de execução em ponto de venda
+   Os valores abaixo são DEMONSTRAÇÃO. Dados comerciais reais chegam pelo
+   arquivo config-pdv.json importado em Ajustes (nunca publicado).
+   ===================================================================== */
+
+const APP_VERSION = '2.0.0';
+const LIBS = {
+  jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  autotable: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+  pptx: 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js'
+};
+
+const DEMO_CONFIG = {
+  versao: 1,
+  nome: 'Configuração de demonstração',
+  toleranciaPrecoPct: 5,
+  classificacoes: ['A', 'B', 'C'],
+  canais: ['Atacarejo', 'Supermercado', 'Varejo tradicional'],
+  distribuidores: ['Distribuidor Demo 1', 'Distribuidor Demo 2'],
+  bandeiras: [
+    { nome: 'Rede Demo Atacarejo', canal: 'Atacarejo' },
+    { nome: 'Rede Demo Supermercado', canal: 'Supermercado' },
+    { nome: 'Loja Independente', canal: 'Varejo tradicional' }
+  ],
+  produtos: [
+    { sku: 'DEMO-01', nome: 'Produto Demo 1' },
+    { sku: 'DEMO-02', nome: 'Produto Demo 2' },
+    { sku: 'DEMO-03', nome: 'Produto Demo 3' }
+  ],
+  precos: {
+    'Atacarejo': { 'DEMO-01': 9.90, 'DEMO-02': 14.50, 'DEMO-03': 4.99 },
+    'Supermercado': { 'DEMO-01': 11.90, 'DEMO-02': 16.90, 'DEMO-03': 5.99 },
+    'Varejo tradicional': { 'DEMO-01': 12.50, 'DEMO-02': 17.90, 'DEMO-03': 6.49 }
+  },
+  oportunidades: [
+    'Mix completo na gôndola',
+    'Produto na altura dos olhos',
+    'Ponto extra',
+    'Material de PDV aplicado',
+    'Etiqueta de preço visível',
+    'Ruptura zero'
+  ],
+  contratos: [
+    {
+      bandeira: 'Rede Demo Atacarejo',
+      vigencia: '2026-01-01 a 2026-12-31',
+      obrigacoes: [
+        { descricao: 'Pontos extras', tipo: 'quantitativa', meta: 2, unidade: 'pontos' },
+        { descricao: 'Frentes mínimas no planograma', tipo: 'quantitativa', meta: 12, unidade: 'frentes' },
+        { descricao: 'Tabloide/encarte do mês', tipo: 'sim_nao' }
+      ]
+    },
+    {
+      bandeira: 'Rede Demo Supermercado',
+      vigencia: '2026-01-01 a 2026-12-31',
+      obrigacoes: [
+        { descricao: 'Ponta de gôndola', tipo: 'quantitativa', meta: 1, unidade: 'ponta' },
+        { descricao: 'Material de PDV', tipo: 'sim_nao' }
+      ]
+    }
+  ]
+};
+
+/* ---------------- IndexedDB ---------------- */
+const DB_NAME = 'execucao-pdv', DB_VER = 1;
+let dbp = null;
+function db() {
+  if (dbp) return dbp;
+  dbp = new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains('pdvs')) d.createObjectStore('pdvs', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('visitas')) d.createObjectStore('visitas', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv', { keyPath: 'k' });
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+  return dbp;
+}
+async function tx(store, mode, fn) {
+  const d = await db();
+  return new Promise((res, rej) => {
+    const t = d.transaction(store, mode);
+    const s = t.objectStore(store);
+    let out;
+    Promise.resolve(fn(s)).then(v => { out = v; });
+    t.oncomplete = () => res(out);
+    t.onerror = () => rej(t.error);
+    t.onabort = () => rej(t.error || new Error('Transação abortada'));
+  });
+}
+const req2p = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const DB = {
+  all: s => tx(s, 'readonly', st => req2p(st.getAll())),
+  get: (s, k) => tx(s, 'readonly', st => req2p(st.get(k))),
+  put: (s, v) => tx(s, 'readwrite', st => { st.put(v); }),
+  del: (s, k) => tx(s, 'readwrite', st => { st.delete(k); }),
+  clear: s => tx(s, 'readwrite', st => { st.clear(); }),
+  kvGet: async k => { const r = await DB.get('kv', k); return r ? r.v : undefined; },
+  kvSet: (k, v) => DB.put('kv', { k, v })
+};
+
+/* ---------------- Utilidades ---------------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const brl = n => (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const pct = n => (n == null || isNaN(n)) ? '—' : `${Math.round(n)}%`;
+const fmtDate = iso => new Date(iso).toLocaleDateString('pt-BR');
+const fmtDateTime = iso => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const parseNum = v => { if (v === '' || v == null) return null; const n = Number(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+function toast(msg, ms = 2600) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms); }
+async function sha256(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+
+async function saveBlob(blob, filename) {
+  const file = new File([blob], filename, { type: blob.type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: filename }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if ($(`script[src="${src}"]`)) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Falha ao carregar ' + src));
+    document.head.appendChild(s);
+  });
+}
+function compressImage(file, max = 1280, q = 0.72) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width: w, height: h } = img;
+      const r = Math.min(1, max / Math.max(w, h)); w = Math.round(w * r); h = Math.round(h * r);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Imagem inválida')); };
+    img.src = url;
+  });
+}
+
+/* ---------------- Estado ---------------- */
+const state = { tab: 'visita', config: DEMO_CONFIG, configIsDemo: true, draft: null, settings: {} };
+const DEFAULT_SETTINGS = { auditor: '', retFotosDias: 180, retRegistrosMeses: 24, lastBackup: null, pinHash: null };
+
+async function loadState() {
+  const cfg = await DB.kvGet('config');
+  if (cfg) { state.config = cfg; state.configIsDemo = false; }
+  state.settings = Object.assign({}, DEFAULT_SETTINGS, await DB.kvGet('settings') || {});
+  state.draft = await DB.kvGet('draft') || null;
+}
+const saveSettings = () => DB.kvSet('settings', state.settings);
+const saveDraft = () => DB.kvSet('draft', state.draft);
+const canalDaBandeira = nome => (state.config.bandeiras || []).find(b => b.nome === nome)?.canal || '';
+const contratoDaBandeira = nome => (state.config.contratos || []).find(c => c.bandeira === nome);
+const precoRef = (canal, sku) => { const t = (state.config.precos || {})[canal]; const v = t ? t[sku] : null; return (v == null || v === '') ? null : Number(v); };
+
+/* ---------------- Cálculos ---------------- */
+function calcObrigacao(o) {
+  if (o.tipo === 'quantitativa') {
+    const meta = Number(o.meta) || 0, real = Number(o.realizado) || 0;
+    if (!meta) return null;
+    return Math.min(100, (real / meta) * 100);
+  }
+  if (o.status === 'na') return null;
+  if (o.status === 'exec') return 100;
+  if (o.status === 'nao') return 0;
+  return null;
+}
+function resumoVisita(v) {
+  const ops = (v.oportunidades || []).filter(o => o.status && o.status !== 'na');
+  const exec = ops.filter(o => o.status === 'exec').length;
+  const opPct = ops.length ? exec / ops.length * 100 : null;
+  const obs = (v.obrigacoes || []).map(calcObrigacao).filter(x => x != null);
+  const contratoPct = obs.length ? obs.reduce((a, b) => a + b, 0) / obs.length : null;
+  const tol = Number(state.config.toleranciaPrecoPct ?? 5);
+  const precos = (v.precos || []).filter(p => p.preco != null && p.ref != null);
+  const fora = precos.filter(p => Math.abs((p.preco - p.ref) / p.ref * 100) > tol).length;
+  const frentes = (v.frentes || []).reduce((a, f) => a + (Number(f.qtd) || 0), 0);
+  const share = (v.modulos && v.modulos.total) ? (Number(v.modulos.marca) || 0) / Number(v.modulos.total) * 100 : null;
+  return { opPct, opExec: exec, opTotal: ops.length, contratoPct, precosTotal: precos.length, precosFora: fora, frentes, share };
+}
+const statusPill = (n, good = 90, mid = 60) => n == null ? '<span class="pill">—</span>' :
+  `<span class="pill ${n >= good ? 'ok' : n >= mid ? 'warn' : 'bad'}">${pct(n)}</span>`;
+
+/* ---------------- Navegação ---------------- */
+const TITLES = { visita: 'Nova visita', pdvs: 'Pontos de venda', historico: 'Histórico', relatorios: 'Relatórios', ajustes: 'Ajustes' };
+function go(tab) {
+  state.tab = tab;
+  $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  $('#title').textContent = TITLES[tab];
+  $('#subtitle').textContent = state.configIsDemo ? 'Configuração de demonstração' : (state.config.nome || 'Configuração importada');
+  window.scrollTo(0, 0);
+  ({ visita: renderVisita, pdvs: renderPdvs, historico: renderHistorico, relatorios: renderRelatorios, ajustes: renderAjustes })[tab]();
+}
+$$('#tabs button').forEach(b => b.onclick = () => go(b.dataset.tab));
+
+function demoBanner() {
+  return state.configIsDemo ? `<div class="banner">Usando valores de <b>demonstração</b>. Importe o <b>config-pdv.json</b> em Ajustes para carregar distribuidores, preços e contratos reais.</div>` : '';
+}
+function options(list, sel, placeholder = 'Selecione') {
+  return `<option value="">${placeholder}</option>` + list.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+}
+
+/* ---------------- PDVs ---------------- */
+async function renderPdvs() {
+  const pdvs = (await DB.all('pdvs')).sort((a, b) => a.nome.localeCompare(b.nome));
+  $('#view').innerHTML = `${demoBanner()}
+  <button class="btn block" id="novoPdv" style="margin:0 0 12px">+ Cadastrar PDV</button>
+  <div class="card list">${pdvs.length ? pdvs.map(p => `
+    <div class="item" data-id="${p.id}">
+      <div class="grow"><div class="t">${esc(p.nome)}</div>
+      <div class="muted">${esc(p.bandeira || '—')} · Classe ${esc(p.classificacao || '—')} · ${esc(p.distribuidor || '—')}${p.cidade ? ' · ' + esc(p.cidade) : ''}</div></div>
+      <button class="btn sm sec" data-edit="${p.id}">Editar</button>
+    </div>`).join('') : '<div class="empty">Nenhum PDV cadastrado ainda.</div>'}</div>`;
+  $('#novoPdv').onclick = () => editPdv();
+  $$('[data-edit]').forEach(b => b.onclick = async () => editPdv(await DB.get('pdvs', b.dataset.edit)));
+}
+function editPdv(p, onSaved) {
+  p = p || { id: uid(), nome: '', bandeira: '', classificacao: '', distribuidor: '', cidade: '', endereco: '', codigo: '' };
+  const c = state.config;
+  const m = openModal(p.nome ? 'Editar PDV' : 'Novo PDV', `
+    <label>Nome do PDV *</label><input id="pNome" value="${esc(p.nome)}" placeholder="Ex.: Loja Centro">
+    <label>Código interno</label><input id="pCod" value="${esc(p.codigo)}">
+    <label>Bandeira *</label><select id="pBand">${options(c.bandeiras.map(b => b.nome), p.bandeira)}</select>
+    <div class="row">
+      <div><label>Classificação *</label><select id="pClass">${options(c.classificacoes, p.classificacao)}</select></div>
+      <div><label>Distribuidor *</label><select id="pDist">${options(c.distribuidores, p.distribuidor)}</select></div>
+    </div>
+    <label>Cidade</label><input id="pCid" value="${esc(p.cidade)}">
+    <label>Endereço</label><input id="pEnd" value="${esc(p.endereco)}">
+    <button class="btn block" id="pSave">Gravar PDV</button>
+    ${p.nome ? '<button class="btn block danger" id="pDel">Excluir PDV</button>' : ''}`);
+  $('#pSave', m).onclick = async () => {
+    const n = { ...p, nome: $('#pNome', m).value.trim(), codigo: $('#pCod', m).value.trim(), bandeira: $('#pBand', m).value,
+      classificacao: $('#pClass', m).value, distribuidor: $('#pDist', m).value, cidade: $('#pCid', m).value.trim(), endereco: $('#pEnd', m).value.trim() };
+    if (!n.nome || !n.bandeira || !n.classificacao || !n.distribuidor) return toast('Preencha nome, bandeira, classificação e distribuidor.');
+    await DB.put('pdvs', n); closeModal(m); toast('PDV gravado.');
+    onSaved ? onSaved(n) : renderPdvs();
+  };
+  const del = $('#pDel', m);
+  if (del) del.onclick = async () => {
+    if (!confirm('Excluir este PDV? As visitas já registradas continuam no histórico.')) return;
+    await DB.del('pdvs', p.id); closeModal(m); toast('PDV excluído.'); renderPdvs();
+  };
+}
+
+/* ---------------- Modal ---------------- */
+function openModal(title, html) {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="sheet"><div class="hd"><h2>${esc(title)}</h2><button class="btn sm sec" data-close>Fechar</button></div>${html}</div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if (e.target === m || e.target.matches('[data-close]')) closeModal(m); });
+  return m;
+}
+const closeModal = m => m.remove();
+function lightbox(src) { const l = document.createElement('div'); l.className = 'lightbox'; l.innerHTML = `<img src="${src}">`; l.onclick = () => l.remove(); document.body.appendChild(l); }
+
+/* ---------------- Visita ---------------- */
+function novoDraft(pdv) {
+  const c = state.config;
+  const canal = canalDaBandeira(pdv.bandeira);
+  const ct = contratoDaBandeira(pdv.bandeira);
+  return {
+    id: uid(), pdvId: pdv.id,
+    pdv: { nome: pdv.nome, codigo: pdv.codigo, bandeira: pdv.bandeira, classificacao: pdv.classificacao, distribuidor: pdv.distribuidor, cidade: pdv.cidade, canal },
+    data: new Date().toISOString(), auditor: state.settings.auditor || '',
+    frentes: c.produtos.map(p => ({ sku: p.sku, nome: p.nome, qtd: null })),
+    modulos: { total: null, marca: null },
+    oportunidades: c.oportunidades.map(item => ({ item, status: null, obs: '' })),
+    precos: c.produtos.map(p => ({ sku: p.sku, nome: p.nome, preco: null, ref: precoRef(canal, p.sku) })),
+    contrato: ct ? { bandeira: ct.bandeira, vigencia: ct.vigencia || '' } : null,
+    obrigacoes: ct ? ct.obrigacoes.map(o => ({ ...o, realizado: null, status: null })) : [],
+    fotos: [], obs: ''
+  };
+}
+async function renderVisita() {
+  const v = state.draft;
+  if (!v) {
+    const pdvs = (await DB.all('pdvs')).sort((a, b) => a.nome.localeCompare(b.nome));
+    $('#view').innerHTML = `${demoBanner()}
+    <div class="card"><h2>Iniciar visita</h2>
+      ${pdvs.length ? `<label>Ponto de venda</label><select id="vPdv">${'<option value="">Selecione o PDV</option>' + pdvs.map(p => `<option value="${p.id}">${esc(p.nome)} — ${esc(p.bandeira)}</option>`).join('')}</select>
+      <button class="btn block" id="vStart">Começar visita</button>` : '<p class="muted">Cadastre o primeiro PDV para começar.</p>'}
+      <button class="btn block sec" id="vNovoPdv">+ Cadastrar novo PDV</button>
+    </div>`;
+    const st = $('#vStart');
+    if (st) st.onclick = async () => {
+      const id = $('#vPdv').value; if (!id) return toast('Selecione um PDV.');
+      state.draft = novoDraft(await DB.get('pdvs', id)); await saveDraft(); renderVisita();
+    };
+    $('#vNovoPdv').onclick = () => editPdv(null, async p => { state.draft = novoDraft(p); await saveDraft(); renderVisita(); });
+    return;
+  }
+  const r = resumoVisita(v);
+  const tol = Number(state.config.toleranciaPrecoPct ?? 5);
+  $('#view').innerHTML = `
+  <div class="card">
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div style="flex:1"><h2 style="margin:0">${esc(v.pdv.nome)}</h2>
+      <div class="muted">${esc(v.pdv.bandeira)} · ${esc(v.pdv.canal || 'canal não definido')} · Classe ${esc(v.pdv.classificacao)} · ${esc(v.pdv.distribuidor)}</div></div>
+    </div>
+    <div class="row"><div><label>Data</label><input type="date" id="dData" value="${v.data.slice(0, 10)}"></div>
+    <div><label>Auditor</label><input id="dAud" value="${esc(v.auditor)}" placeholder="Seu nome"></div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v">${pct(r.opPct)}</div><div class="l">Oportunidades executadas</div></div>
+    <div class="kpi"><div class="v">${pct(r.contratoPct)}</div><div class="l">Cumprimento do contrato</div></div>
+    <div class="kpi"><div class="v">${r.precosFora}/${r.precosTotal}</div><div class="l">Preços fora da faixa (±${tol}%)</div></div>
+  </div>
+
+  <div class="card"><h2>Frentes e módulos</h2>
+    ${v.frentes.map((f, i) => `<div class="oprow"><div class="grow">${esc(f.nome)}<div class="muted">${esc(f.sku)}</div></div>
+      <input class="num" inputmode="numeric" data-frente="${i}" value="${f.qtd ?? ''}" placeholder="frentes"></div>`).join('')}
+    <div class="row"><div><label>Módulos da categoria</label><input inputmode="decimal" id="mTot" value="${v.modulos.total ?? ''}"></div>
+    <div><label>Módulos da marca</label><input inputmode="decimal" id="mMar" value="${v.modulos.marca ?? ''}"></div></div>
+    <p class="muted" id="shareTxt">Total de frentes: <b>${r.frentes}</b> · Participação em módulos: <b>${pct(r.share)}</b></p>
+  </div>
+
+  <div class="card"><h2>Oportunidades</h2>
+    ${v.oportunidades.map((o, i) => `<div class="oprow"><div class="grow">${esc(o.item)}</div>
+      <div class="seg" data-op="${i}">${['exec', 'nao', 'na'].map(s => `<button class="${s} ${o.status === s ? 'on' : ''}" data-s="${s}">${{ exec: 'Executado', nao: 'Não', na: 'N/A' }[s]}</button>`).join('')}</div></div>`).join('')}
+  </div>
+
+  <div class="card"><h2>Preços</h2>
+    <p class="muted">Referência: tabela do canal <b>${esc(v.pdv.canal || '—')}</b>. Tolerância ±${tol}%.</p>
+    ${v.precos.map((p, i) => { const d = (p.preco != null && p.ref) ? (p.preco - p.ref) / p.ref * 100 : null;
+      return `<div class="prow"><div>${esc(p.nome)}<div class="ref">Tabela: ${brl(p.ref)}</div></div>
+      <input inputmode="decimal" data-preco="${i}" value="${p.preco ?? ''}" placeholder="R$">
+      <div data-dif="${i}">${difPill(d, tol)}</div></div>`; }).join('')}
+  </div>
+
+  <div class="card"><h2>Obrigações contratuais</h2>
+    ${v.contrato ? `<p class="muted">Contrato ${esc(v.contrato.bandeira)}${v.contrato.vigencia ? ' · vigência ' + esc(v.contrato.vigencia) : ''}</p>
+    ${v.obrigacoes.map((o, i) => o.tipo === 'quantitativa' ? `
+      <div class="oprow"><div class="grow">${esc(o.descricao)}<div class="muted">Meta: ${o.meta} ${esc(o.unidade || '')} · <span data-obpct="${i}">${pct(calcObrigacao(o))}</span></div>
+      <div class="bar"><i data-obbar="${i}" style="width:${calcObrigacao(o) || 0}%"></i></div></div>
+      <input class="num" inputmode="decimal" data-obreal="${i}" value="${o.realizado ?? ''}" placeholder="realizado"></div>` : `
+      <div class="oprow"><div class="grow">${esc(o.descricao)}</div>
+      <div class="seg" data-ob="${i}">${['exec', 'nao', 'na'].map(s => `<button class="${s} ${o.status === s ? 'on' : ''}" data-s="${s}">${{ exec: 'Executado', nao: 'Não', na: 'N/A' }[s]}</button>`).join('')}</div></div>`).join('')}`
+    : '<p class="muted">Não há contrato cadastrado para esta bandeira.</p>'}
+  </div>
+
+  <div class="card"><h2>Fotos</h2>
+    <label class="btn sec block" style="margin-top:0">📷 Adicionar fotos<input type="file" accept="image/*" multiple id="fotoIn" class="hidden"></label>
+    <div class="photos" id="fotos">${v.fotos.map((f, i) => `<figure><img src="${f.dataUrl}" data-ph="${i}"><button class="x" data-rmph="${i}">×</button><figcaption>${esc(f.legenda || '')}</figcaption></figure>`).join('')}</div>
+  </div>
+
+  <div class="card"><h2>Observações</h2><textarea id="vObs" placeholder="Comentários da visita">${esc(v.obs)}</textarea></div>
+
+  <button class="btn block" id="vFinal">Finalizar e registrar visita</button>
+  <button class="btn block danger" id="vCancel">Descartar visita</button>`;
+
+  const autosave = () => { clearTimeout(autosave._t); autosave._t = setTimeout(saveDraft, 400); };
+  $('#dData').onchange = e => { v.data = new Date(e.target.value + 'T12:00:00').toISOString(); autosave(); };
+  $('#dAud').oninput = e => { v.auditor = e.target.value; state.settings.auditor = e.target.value; saveSettings(); autosave(); };
+  $$('[data-frente]').forEach(el => el.oninput = () => { v.frentes[el.dataset.frente].qtd = parseNum(el.value); updShare(); autosave(); });
+  $('#mTot').oninput = e => { v.modulos.total = parseNum(e.target.value); updShare(); autosave(); };
+  $('#mMar').oninput = e => { v.modulos.marca = parseNum(e.target.value); updShare(); autosave(); };
+  function updShare() { const r = resumoVisita(v); $('#shareTxt').innerHTML = `Total de frentes: <b>${r.frentes}</b> · Participação em módulos: <b>${pct(r.share)}</b>`; updKpis(); }
+  function updKpis() { const r = resumoVisita(v); const k = $$('.kpi .v'); k[0].textContent = pct(r.opPct); k[1].textContent = pct(r.contratoPct); k[2].textContent = `${r.precosFora}/${r.precosTotal}`; }
+  const segHandler = (attr, arr) => $$(`[${attr}]`).forEach(seg => seg.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const it = arr[seg.getAttribute(attr)]; it.status = it.status === b.dataset.s ? null : b.dataset.s;
+    $$('button', seg).forEach(x => x.classList.toggle('on', x.dataset.s === it.status)); updKpis(); autosave();
+  });
+  segHandler('data-op', v.oportunidades); segHandler('data-ob', v.obrigacoes);
+  $$('[data-preco]').forEach(el => el.oninput = () => {
+    const p = v.precos[el.dataset.preco]; p.preco = parseNum(el.value);
+    const d = (p.preco != null && p.ref) ? (p.preco - p.ref) / p.ref * 100 : null;
+    $(`[data-dif="${el.dataset.preco}"]`).innerHTML = difPill(d, tol); updKpis(); autosave();
+  });
+  $$('[data-obreal]').forEach(el => el.oninput = () => {
+    const i = el.dataset.obreal, o = v.obrigacoes[i]; o.realizado = parseNum(el.value);
+    const c = calcObrigacao(o); $(`[data-obpct="${i}"]`).textContent = pct(c); $(`[data-obbar="${i}"]`).style.width = (c || 0) + '%'; updKpis(); autosave();
+  });
+  $('#fotoIn').onchange = async e => {
+    const files = [...e.target.files]; if (!files.length) return;
+    toast('Processando fotos…');
+    for (const f of files) {
+      try { const dataUrl = await compressImage(f); const legenda = prompt('Legenda da foto (opcional):', '') || ''; v.fotos.push({ id: uid(), data: new Date().toISOString(), legenda, dataUrl }); }
+      catch (err) { toast('Não foi possível ler uma das fotos.'); }
+    }
+    await saveDraft(); renderVisita();
+  };
+  $$('[data-ph]').forEach(img => img.onclick = () => lightbox(img.src));
+  $$('[data-rmph]').forEach(b => b.onclick = async () => { if (!confirm('Remover esta foto?')) return; v.fotos.splice(b.dataset.rmph, 1); await saveDraft(); renderVisita(); });
+  $('#vObs').oninput = e => { v.obs = e.target.value; autosave(); };
+  $('#vFinal').onclick = async () => {
+    if (!v.auditor.trim()) return toast('Informe o nome do auditor.');
+    const pend = v.oportunidades.filter(o => !o.status).length;
+    if (pend && !confirm(`${pend} oportunidade(s) sem marcação. Registrar mesmo assim?`)) return;
+    v.finalizadaEm = new Date().toISOString(); v.resumo = resumoVisita(v);
+    await DB.put('visitas', v); state.draft = null; await DB.del('kv', 'draft');
+    toast('Visita registrada no Histórico.'); go('historico');
+  };
+  $('#vCancel').onclick = async () => {
+    if (!confirm('Descartar esta visita? Os dados lançados serão perdidos.')) return;
+    state.draft = null; await DB.del('kv', 'draft'); renderVisita();
+  };
+}
+function difPill(d, tol) {
+  if (d == null) return '<span class="muted">—</span>';
+  const cls = Math.abs(d) <= tol ? 'ok' : 'bad';
+  return `<span class="pill ${cls}">${d > 0 ? '+' : ''}${d.toFixed(1)}%</span>`;
+}
+
+/* ---------------- Histórico ---------------- */
+async function renderHistorico() {
+  const vs = (await DB.all('visitas')).sort((a, b) => b.data.localeCompare(a.data));
+  $('#view').innerHTML = `
+  <div class="card"><input id="hBusca" placeholder="Buscar por PDV, bandeira ou distribuidor"></div>
+  <div class="card list" id="hList"></div>`;
+  const draw = q => {
+    q = (q || '').toLowerCase();
+    const f = vs.filter(v => !q || [v.pdv.nome, v.pdv.bandeira, v.pdv.distribuidor, v.auditor].join(' ').toLowerCase().includes(q));
+    $('#hList').innerHTML = f.length ? f.map(v => { const r = v.resumo || resumoVisita(v); return `
+      <div class="item" data-v="${v.id}"><div class="grow"><div class="t">${esc(v.pdv.nome)}</div>
+      <div class="muted">${fmtDate(v.data)} · ${esc(v.pdv.bandeira)} · ${v.fotos.length} foto(s)</div></div>
+      <div style="text-align:right">${statusPill(r.contratoPct)}<div class="muted" style="font-size:11px">contrato</div></div></div>`; }).join('')
+      : '<div class="empty">Nenhuma visita registrada.</div>';
+    $$('[data-v]').forEach(el => el.onclick = () => detalheVisita(vs.find(v => v.id === el.dataset.v)));
+  };
+  draw(); $('#hBusca').oninput = e => draw(e.target.value);
+}
+function detalheVisita(v) {
+  const r = v.resumo || resumoVisita(v);
+  const tol = Number(state.config.toleranciaPrecoPct ?? 5);
+  const st = s => ({ exec: '<span class="pill ok">Executado</span>', nao: '<span class="pill bad">Não</span>', na: '<span class="pill">N/A</span>' }[s] || '<span class="muted">—</span>');
+  const m = openModal(v.pdv.nome, `
+    <p class="muted">${fmtDateTime(v.data)} · ${esc(v.auditor)}<br>${esc(v.pdv.bandeira)} · ${esc(v.pdv.canal)} · Classe ${esc(v.pdv.classificacao)} · ${esc(v.pdv.distribuidor)}</p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">${pct(r.opPct)}</div><div class="l">Oportunidades (${r.opExec}/${r.opTotal})</div></div>
+      <div class="kpi"><div class="v">${pct(r.contratoPct)}</div><div class="l">Contrato</div></div>
+      <div class="kpi"><div class="v">${r.frentes}</div><div class="l">Frentes · módulos ${pct(r.share)}</div></div>
+    </div>
+    <div class="card"><h2>Oportunidades</h2><table class="mini">${v.oportunidades.map(o => `<tr><td>${esc(o.item)}</td><td style="text-align:right">${st(o.status)}</td></tr>`).join('')}</table></div>
+    <div class="card"><h2>Preços</h2><table class="mini"><tr><th>Produto</th><th>Coletado</th><th>Tabela</th><th>Dif.</th></tr>
+      ${v.precos.map(p => `<tr><td>${esc(p.nome)}</td><td>${brl(p.preco)}</td><td>${brl(p.ref)}</td><td>${difPill(p.preco != null && p.ref ? (p.preco - p.ref) / p.ref * 100 : null, tol)}</td></tr>`).join('')}</table></div>
+    <div class="card"><h2>Obrigações contratuais</h2>${v.obrigacoes.length ? `<table class="mini">${v.obrigacoes.map(o => `<tr><td>${esc(o.descricao)}${o.tipo === 'quantitativa' ? `<div class="muted">${o.realizado ?? 0} de ${o.meta} ${esc(o.unidade || '')}</div>` : ''}</td><td style="text-align:right">${o.tipo === 'quantitativa' ? statusPill(calcObrigacao(o), 100, 50) : st(o.status)}</td></tr>`).join('')}</table>` : '<p class="muted">Sem contrato para esta bandeira.</p>'}</div>
+    <div class="card"><h2>Fotos (${v.fotos.length})</h2><div class="photos">${v.fotos.map(f => `<figure><img src="${f.dataUrl}" data-ph><figcaption>${esc(f.legenda || '')}</figcaption></figure>`).join('') || '<p class="muted">Sem fotos.</p>'}</div></div>
+    ${v.obs ? `<div class="card"><h2>Observações</h2><p style="white-space:pre-wrap;margin:0">${esc(v.obs)}</p></div>` : ''}
+    <div class="row"><button class="btn" id="dPdf">PDF</button><button class="btn" id="dPpt">PowerPoint</button></div>
+    <button class="btn block danger" id="dDel">Excluir visita</button>`);
+  $$('[data-ph]', m).forEach(i => i.onclick = () => lightbox(i.src));
+  $('#dPdf', m).onclick = () => gerarPDF([v], `Visita — ${v.pdv.nome}`);
+  $('#dPpt', m).onclick = () => gerarPPTX([v], `Visita — ${v.pdv.nome}`);
+  $('#dDel', m).onclick = async () => {
+    if (!confirm('Excluir esta visita e suas fotos? Essa ação não pode ser desfeita.')) return;
+    await DB.del('visitas', v.id); closeModal(m); toast('Visita excluída.'); renderHistorico();
+  };
+}
+
+/* ---------------- Relatórios ---------------- */
+async function renderRelatorios() {
+  const vs = await DB.all('visitas');
+  const ini = new Date(); ini.setDate(1);
+  const c = state.config;
+  $('#view').innerHTML = `
+  <div class="card"><h2>Filtros</h2>
+    <div class="row"><div><label>De</label><input type="date" id="rIni" value="${ini.toISOString().slice(0, 10)}"></div>
+    <div><label>Até</label><input type="date" id="rFim" value="${todayISO()}"></div></div>
+    <div class="row"><div><label>Bandeira</label><select id="rBand">${options(c.bandeiras.map(b => b.nome), '', 'Todas')}</select></div>
+    <div><label>Distribuidor</label><select id="rDist">${options(c.distribuidores, '', 'Todos')}</select></div></div>
+  </div>
+  <div id="rRes"></div>
+  <div class="row"><button class="btn" id="rPdf">Gerar PDF</button><button class="btn" id="rPpt">Gerar PowerPoint</button></div>
+  <p class="muted">Na primeira geração os relatórios precisam de internet para baixar as bibliotecas; depois funcionam offline.</p>`;
+  const filtrar = () => {
+    const a = $('#rIni').value, b = $('#rFim').value, band = $('#rBand').value, dist = $('#rDist').value;
+    return vs.filter(v => { const d = v.data.slice(0, 10); return (!a || d >= a) && (!b || d <= b) && (!band || v.pdv.bandeira === band) && (!dist || v.pdv.distribuidor === dist); })
+      .sort((x, y) => x.data.localeCompare(y.data));
+  };
+  const draw = () => {
+    const f = filtrar(); const ag = agregado(f);
+    $('#rRes').innerHTML = `<div class="kpis">
+      <div class="kpi"><div class="v">${f.length}</div><div class="l">Visitas</div></div>
+      <div class="kpi"><div class="v">${pct(ag.op)}</div><div class="l">Oportunidades executadas</div></div>
+      <div class="kpi"><div class="v">${pct(ag.contrato)}</div><div class="l">Cumprimento médio de contrato</div></div>
+      <div class="kpi"><div class="v">${pct(ag.precoFora)}</div><div class="l">Preços fora da faixa</div></div></div>
+      ${ag.porBandeira.length ? `<div class="card"><h2>Por bandeira</h2><table class="mini"><tr><th>Bandeira</th><th>Visitas</th><th>Oport.</th><th>Contrato</th></tr>
+      ${ag.porBandeira.map(b => `<tr><td>${esc(b.nome)}</td><td>${b.n}</td><td>${pct(b.op)}</td><td>${statusPill(b.contrato)}</td></tr>`).join('')}</table></div>` : ''}`;
+  };
+  ['#rIni', '#rFim', '#rBand', '#rDist'].forEach(s => $(s).onchange = draw); draw();
+  const titulo = () => `Execução PDV — ${fmtDate($('#rIni').value + 'T12:00')} a ${fmtDate($('#rFim').value + 'T12:00')}${$('#rBand').value ? ' — ' + $('#rBand').value : ''}`;
+  $('#rPdf').onclick = () => { const f = filtrar(); if (!f.length) return toast('Nenhuma visita no período.'); gerarPDF(f, titulo()); };
+  $('#rPpt').onclick = () => { const f = filtrar(); if (!f.length) return toast('Nenhuma visita no período.'); gerarPPTX(f, titulo()); };
+}
+const media = arr => { const a = arr.filter(x => x != null); return a.length ? a.reduce((s, x) => s + x, 0) / a.length : null; };
+function agregado(vs) {
+  const rs = vs.map(v => v.resumo || resumoVisita(v));
+  const opExec = rs.reduce((s, r) => s + r.opExec, 0), opTot = rs.reduce((s, r) => s + r.opTotal, 0);
+  const pf = rs.reduce((s, r) => s + r.precosFora, 0), pt = rs.reduce((s, r) => s + r.precosTotal, 0);
+  const grupos = {};
+  vs.forEach((v, i) => { (grupos[v.pdv.bandeira] = grupos[v.pdv.bandeira] || []).push(rs[i]); });
+  return {
+    op: opTot ? opExec / opTot * 100 : null, contrato: media(rs.map(r => r.contratoPct)), precoFora: pt ? pf / pt * 100 : null,
+    porBandeira: Object.entries(grupos).map(([nome, g]) => {
+      const e = g.reduce((s, r) => s + r.opExec, 0), t = g.reduce((s, r) => s + r.opTotal, 0);
+      return { nome, n: g.length, op: t ? e / t * 100 : null, contrato: media(g.map(r => r.contratoPct)) };
+    }).sort((a, b) => a.nome.localeCompare(b.nome))
+  };
+}
+const stTxt = s => ({ exec: 'Executado', nao: 'Não', na: 'N/A' }[s] || '—');
+const slug = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+
+async function gerarPDF(vs, titulo) {
+  try {
+    toast('Gerando PDF…');
+    await loadScript(LIBS.jspdf); await loadScript(LIBS.autotable);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = 210, M = 14, verde = [15, 92, 77];
+    const ag = agregado(vs);
+    doc.setFillColor(...verde); doc.rect(0, 0, W, 26, 'F');
+    doc.setTextColor(255); doc.setFontSize(15); doc.text(titulo, M, 12, { maxWidth: W - 2 * M });
+    doc.setFontSize(9); doc.text(`Gerado em ${fmtDateTime(new Date().toISOString())} · ${vs.length} visita(s)`, M, 20);
+    doc.setTextColor(20);
+    doc.autoTable({ startY: 32, head: [['Indicador', 'Resultado']], theme: 'grid', headStyles: { fillColor: verde },
+      body: [['Visitas', String(vs.length)], ['Oportunidades executadas', pct(ag.op)], ['Cumprimento médio de contrato', pct(ag.contrato)], ['Preços fora da faixa', pct(ag.precoFora)]] });
+    if (vs.length > 1) {
+      doc.autoTable({ head: [['Data', 'PDV', 'Bandeira', 'Distribuidor', 'Oport.', 'Contrato', 'Fotos']], headStyles: { fillColor: verde }, styles: { fontSize: 8 },
+        body: vs.map(v => { const r = v.resumo || resumoVisita(v); return [fmtDate(v.data), v.pdv.nome, v.pdv.bandeira, v.pdv.distribuidor, pct(r.opPct), pct(r.contratoPct), v.fotos.length]; }) });
+    }
+    for (const v of vs) {
+      doc.addPage();
+      const r = v.resumo || resumoVisita(v);
+      doc.setFontSize(13); doc.setTextColor(...verde); doc.text(v.pdv.nome, M, 16);
+      doc.setFontSize(9); doc.setTextColor(90);
+      doc.text(`${fmtDateTime(v.data)} · ${v.auditor} · ${v.pdv.bandeira} · ${v.pdv.canal || ''} · Classe ${v.pdv.classificacao} · ${v.pdv.distribuidor}`, M, 22, { maxWidth: W - 2 * M });
+      doc.setTextColor(20);
+      doc.autoTable({ startY: 28, head: [['Oportunidade', 'Status']], headStyles: { fillColor: verde }, styles: { fontSize: 8 }, body: v.oportunidades.map(o => [o.item, stTxt(o.status)]) });
+      doc.autoTable({ head: [['Produto', 'Frentes', 'Preço coletado', 'Tabela', 'Dif.']], headStyles: { fillColor: verde }, styles: { fontSize: 8 },
+        body: v.precos.map((p, i) => [p.nome, v.frentes[i]?.qtd ?? '—', brl(p.preco), brl(p.ref), p.preco != null && p.ref ? ((p.preco - p.ref) / p.ref * 100).toFixed(1) + '%' : '—']) });
+      if (v.obrigacoes.length) doc.autoTable({ head: [['Obrigação contratual', 'Meta', 'Realizado', 'Cumprimento']], headStyles: { fillColor: verde }, styles: { fontSize: 8 },
+        body: v.obrigacoes.map(o => o.tipo === 'quantitativa' ? [o.descricao, `${o.meta} ${o.unidade || ''}`, o.realizado ?? 0, pct(calcObrigacao(o))] : [o.descricao, '—', stTxt(o.status), pct(calcObrigacao(o))]) });
+      let y = doc.lastAutoTable.finalY + 6;
+      doc.setFontSize(9);
+      doc.text(`Resumo: oportunidades ${pct(r.opPct)} · contrato ${pct(r.contratoPct)} · ${r.frentes} frentes · módulos ${pct(r.share)}`, M, y); y += 6;
+      if (v.obs) { const l = doc.splitTextToSize('Observações: ' + v.obs, W - 2 * M); if (y + l.length * 4 > 285) { doc.addPage(); y = 16; } doc.text(l, M, y); y += l.length * 4 + 4; }
+      const fw = (W - 2 * M - 8) / 3, fh = fw * 0.75;
+      let col = 0;
+      for (const f of v.fotos) {
+        if (y + fh > 285) { doc.addPage(); y = 16; col = 0; }
+        try { doc.addImage(f.dataUrl, 'JPEG', M + col * (fw + 4), y, fw, fh, undefined, 'FAST'); } catch (e) {}
+        if (f.legenda) { doc.setFontSize(7); doc.text(f.legenda, M + col * (fw + 4), y + fh + 3, { maxWidth: fw }); }
+        col++; if (col === 3) { col = 0; y += fh + 7; }
+      }
+    }
+    const blob = doc.output('blob');
+    await saveBlob(blob, `${slug(titulo)}.pdf`);
+  } catch (e) { console.error(e); toast('Não foi possível gerar o PDF. Abra o app com internet ao menos uma vez.'); }
+}
+
+async function gerarPPTX(vs, titulo) {
+  try {
+    toast('Gerando PowerPoint…');
+    await loadScript(LIBS.pptx);
+    const pptx = new window.PptxGenJS(); pptx.layout = 'LAYOUT_16x9';
+    const verde = '0F5C4D', ag = agregado(vs);
+    let s = pptx.addSlide(); s.background = { color: verde };
+    s.addText(titulo, { x: 0.6, y: 1.8, w: 8.8, h: 1.2, fontSize: 28, bold: true, color: 'FFFFFF' });
+    s.addText(`${vs.length} visita(s) · gerado em ${fmtDate(new Date().toISOString())}`, { x: 0.6, y: 3.0, w: 8.8, h: 0.5, fontSize: 14, color: 'E3F0EC' });
+    s = pptx.addSlide();
+    s.addText('Resumo', { x: 0.5, y: 0.3, w: 9, h: 0.6, fontSize: 22, bold: true, color: verde });
+    [['Visitas', String(vs.length)], ['Oportunidades executadas', pct(ag.op)], ['Contrato (média)', pct(ag.contrato)], ['Preços fora da faixa', pct(ag.precoFora)]].forEach(([l, v], i) => {
+      const x = 0.5 + i * 2.3;
+      s.addShape(pptx.ShapeType.roundRect, { x, y: 1.2, w: 2.1, h: 1.4, fill: { color: 'E3F0EC' }, rectRadius: 0.1, line: { color: 'E3F0EC' } });
+      s.addText(v, { x, y: 1.3, w: 2.1, h: 0.7, fontSize: 26, bold: true, color: verde, align: 'center' });
+      s.addText(l, { x, y: 2.0, w: 2.1, h: 0.5, fontSize: 11, color: '444444', align: 'center' });
+    });
+    if (ag.porBandeira.length) {
+      const rows = [['Bandeira', 'Visitas', 'Oportunidades', 'Contrato'].map(t => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: verde } } }))]
+        .concat(ag.porBandeira.map(b => [b.nome, String(b.n), pct(b.op), pct(b.contrato)]));
+      s.addTable(rows, { x: 0.5, y: 2.9, w: 9, fontSize: 11, border: { type: 'solid', color: 'DFE5E2', pt: 0.5 } });
+    }
+    for (const v of vs) {
+      const r = v.resumo || resumoVisita(v);
+      s = pptx.addSlide();
+      s.addText(v.pdv.nome, { x: 0.5, y: 0.25, w: 9, h: 0.5, fontSize: 20, bold: true, color: verde });
+      s.addText(`${fmtDate(v.data)} · ${v.pdv.bandeira} · Classe ${v.pdv.classificacao} · ${v.pdv.distribuidor} · ${v.auditor}`, { x: 0.5, y: 0.75, w: 9, h: 0.35, fontSize: 11, color: '666666' });
+      const linhas = [
+        `Oportunidades executadas: ${pct(r.opPct)} (${r.opExec}/${r.opTotal})`,
+        `Cumprimento do contrato: ${pct(r.contratoPct)}`,
+        `Frentes: ${r.frentes} · Participação em módulos: ${pct(r.share)}`,
+        `Preços fora da faixa: ${r.precosFora} de ${r.precosTotal}`
+      ];
+      const nao = v.oportunidades.filter(o => o.status === 'nao').map(o => o.item);
+      if (nao.length) linhas.push(`Não executado: ${nao.join(', ')}`);
+      const obsPend = v.obrigacoes.filter(o => (calcObrigacao(o) ?? 100) < 100).map(o => o.descricao);
+      if (obsPend.length) linhas.push(`Contrato pendente: ${obsPend.join(', ')}`);
+      s.addText(linhas.map(t => ({ text: t, options: { bullet: true } })), { x: 0.5, y: 1.25, w: v.fotos.length ? 4.6 : 9, h: 3.8, fontSize: 13, color: '222222', valign: 'top' });
+      v.fotos.slice(0, 2).forEach((f, i) => s.addImage({ data: f.dataUrl, x: 5.3, y: 1.25 + i * 2.0, w: 4.2, h: 1.9, sizing: { type: 'cover', w: 4.2, h: 1.9 } }));
+      if (v.fotos.length > 2) {
+        for (let i = 2; i < v.fotos.length; i += 4) {
+          const sf = pptx.addSlide();
+          sf.addText(`${v.pdv.nome} — fotos`, { x: 0.5, y: 0.25, w: 9, h: 0.5, fontSize: 18, bold: true, color: verde });
+          v.fotos.slice(i, i + 4).forEach((f, j) => {
+            sf.addImage({ data: f.dataUrl, x: 0.5 + (j % 2) * 4.6, y: 0.9 + Math.floor(j / 2) * 2.3, w: 4.4, h: 2.0, sizing: { type: 'cover', w: 4.4, h: 2.0 } });
+            if (f.legenda) sf.addText(f.legenda, { x: 0.5 + (j % 2) * 4.6, y: 2.9 + Math.floor(j / 2) * 2.3, w: 4.4, h: 0.25, fontSize: 9, color: '666666' });
+          });
+        }
+      }
+    }
+    const blob = await pptx.write({ outputType: 'blob' });
+    await saveBlob(new Blob([blob], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' }), `${slug(titulo)}.pptx`);
+  } catch (e) { console.error(e); toast('Não foi possível gerar o PowerPoint. Abra o app com internet ao menos uma vez.'); }
+}
+
+/* ---------------- Ajustes ---------------- */
+async function renderAjustes() {
+  const s = state.settings, c = state.config;
+  const vs = await DB.all('visitas');
+  const nFotos = vs.reduce((a, v) => a + v.fotos.length, 0);
+  let usoTxt = '';
+  try { if (navigator.storage?.estimate) { const e = await navigator.storage.estimate(); usoTxt = ` · ${(e.usage / 1048576).toFixed(1)} MB usados`; } } catch (e) {}
+  const persist = navigator.storage?.persisted ? await navigator.storage.persisted().catch(() => false) : false;
+  $('#view').innerHTML = `
+  <div class="card"><h2>Tabela de preços, distribuidores e contratos</h2>
+    <p class="muted">${state.configIsDemo ? 'Usando configuração de <b>demonstração</b>.' : `Importada: <b>${esc(c.nome || 'config-pdv.json')}</b>${c.importadaEm ? ' em ' + fmtDateTime(c.importadaEm) : ''}.`}<br>
+    ${c.distribuidores.length} distribuidor(es) · ${c.bandeiras.length} bandeira(s) · ${c.produtos.length} produto(s) · ${(c.contratos || []).length} contrato(s)</p>
+    <label class="btn block sec">Escolher config-pdv.json<input type="file" accept=".json,application/json" id="cfgIn" class="hidden"></label>
+    ${state.configIsDemo ? '' : '<button class="btn block danger" id="cfgReset">Voltar para a demonstração</button>'}
+  </div>
+
+  <div class="card"><h2>PIN de acesso</h2>
+    <p class="muted">${s.pinHash ? 'PIN ativo.' : 'Nenhum PIN definido.'} O PIN bloqueia a tela, mas <b>não criptografa</b> os dados.</p>
+    <div class="row"><input id="pin1" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Novo PIN (mín. 4)"><input id="pin2" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Repita o PIN"></div>
+    <button class="btn block" id="pinSave">${s.pinHash ? 'Trocar PIN' : 'Definir PIN'}</button>
+    ${s.pinHash ? '<button class="btn block danger" id="pinOff">Remover PIN</button>' : ''}
+  </div>
+
+  <div class="card"><h2>Backup</h2>
+    <p class="muted">${vs.length} visita(s) · ${nFotos} foto(s)${usoTxt}<br>Último backup: <b>${s.lastBackup ? fmtDateTime(s.lastBackup) : 'nunca'}</b>${persist ? '' : '<br>Armazenamento não persistente: mantenha backups regulares.'}</p>
+    <button class="btn block" id="bkExp">Exportar backup (.json)</button>
+    <label class="btn block sec">Restaurar backup<input type="file" accept=".json,application/json" id="bkIn" class="hidden"></label>
+  </div>
+
+  <div class="card"><h2>Retenção</h2>
+    <div class="row"><div><label>Fotos (dias)</label><input id="retF" inputmode="numeric" value="${s.retFotosDias}"></div>
+    <div><label>Registros (meses)</label><input id="retR" inputmode="numeric" value="${s.retRegistrosMeses}"></div></div>
+    <button class="btn block sec" id="retRev">Revisar itens vencidos</button>
+  </div>
+
+  <div class="card"><h2>Sobre</h2><p class="muted">Execução PDV v${APP_VERSION}. Os dados ficam somente neste aparelho (IndexedDB). Nada é enviado à internet.</p>
+    <button class="btn block sec" id="libsBtn">Pré-carregar bibliotecas dos relatórios</button></div>`;
+
+  $('#cfgIn').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const cfg = validarConfig(JSON.parse(await f.text()));
+      cfg.importadaEm = new Date().toISOString();
+      await DB.kvSet('config', cfg); state.config = cfg; state.configIsDemo = false;
+      toast('Configuração importada com sucesso.', 3500); go('ajustes');
+    } catch (err) { alert('Arquivo de configuração inválido:\n' + err.message); }
+  };
+  const cr = $('#cfgReset');
+  if (cr) cr.onclick = async () => { if (!confirm('Remover a configuração importada e voltar aos valores de demonstração?')) return; await DB.del('kv', 'config'); state.config = DEMO_CONFIG; state.configIsDemo = true; go('ajustes'); };
+
+  $('#pinSave').onclick = async () => {
+    const a = $('#pin1').value, b = $('#pin2').value;
+    if (!/^\d{4,}$/.test(a)) return toast('O PIN deve ter pelo menos 4 dígitos numéricos.');
+    if (a !== b) return toast('Os PINs não conferem.');
+    s.pinHash = await sha256('pdv:' + a); await saveSettings(); toast('PIN definido.'); go('ajustes');
+  };
+  const po = $('#pinOff');
+  if (po) po.onclick = async () => { if (!confirm('Remover o PIN?')) return; s.pinHash = null; await saveSettings(); go('ajustes'); };
+
+  $('#bkExp').onclick = async () => {
+    const data = { app: 'execucao-pdv', versao: APP_VERSION, exportadoEm: new Date().toISOString(),
+      pdvs: await DB.all('pdvs'), visitas: await DB.all('visitas'), config: state.configIsDemo ? null : state.config,
+      settings: { ...s, pinHash: undefined }, draft: state.draft };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    await saveBlob(blob, `backup-execucao-pdv-${todayISO()}.json`);
+    s.lastBackup = new Date().toISOString(); await saveSettings(); go('ajustes');
+  };
+  $('#bkIn').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      if (d.app !== 'execucao-pdv') throw new Error('Este arquivo não é um backup do Execução PDV.');
+      const modo = confirm(`Backup de ${fmtDateTime(d.exportadoEm)}: ${d.pdvs.length} PDV(s), ${d.visitas.length} visita(s).\n\nOK = mesclar com os dados atuais\nCancelar = escolher substituir`);
+      if (!modo) { if (!confirm('Substituir TODOS os dados atuais pelo backup? Os dados atuais serão apagados.')) return; await DB.clear('pdvs'); await DB.clear('visitas'); }
+      for (const p of d.pdvs) await DB.put('pdvs', p);
+      for (const v of d.visitas) await DB.put('visitas', v);
+      if (d.config) { await DB.kvSet('config', d.config); state.config = d.config; state.configIsDemo = false; }
+      if (d.settings) { const keep = s.pinHash; Object.assign(s, d.settings, { pinHash: keep }); await saveSettings(); }
+      toast('Backup restaurado.', 3500); go('ajustes');
+    } catch (err) { alert('Não foi possível restaurar: ' + err.message); }
+  };
+  $('#retF').onchange = e => { s.retFotosDias = Math.max(1, parseInt(e.target.value) || 180); saveSettings(); };
+  $('#retR').onchange = e => { s.retRegistrosMeses = Math.max(1, parseInt(e.target.value) || 24); saveSettings(); };
+  $('#retRev').onclick = () => revisarRetencao(vs);
+  $('#libsBtn').onclick = async () => {
+    try { await Promise.all(Object.values(LIBS).map(u => fetch(u, { mode: 'cors' }))); await loadScript(LIBS.jspdf); await loadScript(LIBS.autotable); await loadScript(LIBS.pptx); toast('Bibliotecas prontas para uso offline.'); }
+    catch (e) { toast('Sem conexão. Tente novamente com internet.'); }
+  };
+}
+function validarConfig(c) {
+  const req = ['classificacoes', 'distribuidores', 'bandeiras', 'produtos'];
+  for (const k of req) if (!Array.isArray(c[k]) || !c[k].length) throw new Error(`Campo "${k}" ausente ou vazio.`);
+  c.bandeiras = c.bandeiras.map(b => typeof b === 'string' ? { nome: b, canal: '' } : b);
+  c.distribuidores = c.distribuidores.map(d => typeof d === 'string' ? d : d.nome);
+  c.canais = c.canais || [...new Set(c.bandeiras.map(b => b.canal).filter(Boolean))];
+  c.precos = c.precos || {}; c.oportunidades = c.oportunidades || []; c.contratos = c.contratos || [];
+  c.produtos.forEach(p => { if (!p.sku || !p.nome) throw new Error('Todo produto precisa de "sku" e "nome".'); });
+  c.contratos.forEach(ct => (ct.obrigacoes || []).forEach(o => { if (o.tipo === 'quantitativa' && !(Number(o.meta) > 0)) throw new Error(`Obrigação "${o.descricao}" precisa de meta numérica.`); }));
+  return c;
+}
+function revisarRetencao(vs) {
+  const s = state.settings, agora = Date.now();
+  const limF = agora - s.retFotosDias * 864e5;
+  const dR = new Date(); dR.setMonth(dR.getMonth() - s.retRegistrosMeses); const limR = dR.getTime();
+  const regVenc = vs.filter(v => new Date(v.data).getTime() < limR);
+  const fotoVenc = vs.filter(v => new Date(v.data).getTime() < limF && v.fotos.length && !regVenc.includes(v));
+  const nf = fotoVenc.reduce((a, v) => a + v.fotos.length, 0);
+  const m = openModal('Itens vencidos', `
+    <p class="muted">Faça um backup antes de apagar. A exclusão não pode ser desfeita.</p>
+    <div class="card"><h2>Fotos com mais de ${s.retFotosDias} dias</h2>
+      ${fotoVenc.length ? `<table class="mini">${fotoVenc.map(v => `<tr><td>${fmtDate(v.data)} · ${esc(v.pdv.nome)}</td><td>${v.fotos.length} foto(s)</td></tr>`).join('')}</table>
+      <button class="btn block danger" id="rmF">Apagar ${nf} foto(s) — manter os registros</button>` : '<p class="muted">Nenhuma foto vencida.</p>'}</div>
+    <div class="card"><h2>Registros com mais de ${s.retRegistrosMeses} meses</h2>
+      ${regVenc.length ? `<table class="mini">${regVenc.map(v => `<tr><td>${fmtDate(v.data)} · ${esc(v.pdv.nome)}</td><td>${v.fotos.length} foto(s)</td></tr>`).join('')}</table>
+      <button class="btn block danger" id="rmR">Apagar ${regVenc.length} visita(s)</button>` : '<p class="muted">Nenhum registro vencido.</p>'}</div>`);
+  const a = $('#rmF', m); if (a) a.onclick = async () => { if (!confirm(`Apagar ${nf} foto(s)?`)) return; for (const v of fotoVenc) { v.fotos = []; await DB.put('visitas', v); } closeModal(m); toast('Fotos apagadas.'); go('ajustes'); };
+  const b = $('#rmR', m); if (b) b.onclick = async () => { if (!confirm(`Apagar ${regVenc.length} visita(s)?`)) return; for (const v of regVenc) await DB.del('visitas', v.id); closeModal(m); toast('Registros apagados.'); go('ajustes'); };
+}
+
+/* ---------------- Bloqueio por PIN ---------------- */
+let hiddenAt = 0;
+function lock() { if (!state.settings.pinHash) return; $('#lock').classList.remove('hidden'); $('#pinInput').value = ''; $('#pinErr').textContent = ''; setTimeout(() => $('#pinInput').focus(), 100); }
+async function tryUnlock() {
+  const h = await sha256('pdv:' + $('#pinInput').value);
+  if (h === state.settings.pinHash) { $('#lock').classList.add('hidden'); } else { $('#pinErr').textContent = 'PIN incorreto.'; $('#pinInput').value = ''; }
+}
+$('#pinBtn').onclick = tryUnlock;
+$('#pinInput').onkeydown = e => { if (e.key === 'Enter') tryUnlock(); };
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) hiddenAt = Date.now();
+  else if (hiddenAt && Date.now() - hiddenAt > 2 * 60 * 1000) lock();
+});
+
+/* ---------------- Rede e Service Worker ---------------- */
+const updNet = () => $('#netBadge').classList.toggle('hidden', navigator.onLine);
+addEventListener('online', updNet); addEventListener('offline', updNet);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW', e));
+
+(async function init() {
+  try { if (navigator.storage?.persist) navigator.storage.persist(); } catch (e) {}
+  await loadState(); updNet(); lock(); go('visita');
+})();
+</script>
+</body>
+</html>
